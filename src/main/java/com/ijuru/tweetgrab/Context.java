@@ -21,6 +21,9 @@ package com.ijuru.tweetgrab;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
+import twitter4j.TwitterFactory;
+import twitter4j.conf.ConfigurationBuilder;
+
 /**
  * Application context
  */
@@ -28,7 +31,10 @@ public class Context {
 
 	private static final String ENVVAR_NAME = "TWEETGRAB_OPTIONS";
 	private static final String JVMPROP_NAME = "tweetgrab.options";
+
 	private static Options options;
+
+	private static TwitterFactory twitterFactory;
 	
 	/**
 	 * Starts the application
@@ -46,6 +52,15 @@ public class Context {
 			
 		ObjectMapper mapper = new ObjectMapper();
 		options = mapper.readValue(optionsJSON, Options.class);
+
+		ConfigurationBuilder cb = new ConfigurationBuilder();
+		cb.setDebugEnabled(false)
+			.setOAuthConsumerKey(options.getCredentials().get("consumerKey"))
+			.setOAuthConsumerSecret(options.getCredentials().get("consumerSecret"))
+			.setOAuthAccessToken(options.getCredentials().get("accessToken"))
+			.setOAuthAccessTokenSecret(options.getCredentials().get("accessTokenSecret"));
+
+		twitterFactory = new TwitterFactory(cb.build());
 	}
 	
 	public static void destroyApplication() {
@@ -54,5 +69,9 @@ public class Context {
 	
 	public static Options getOptions() {
 		return options;
+	}
+
+	public static TwitterFactory getTwitterFactory() {
+		return twitterFactory;
 	}
 }

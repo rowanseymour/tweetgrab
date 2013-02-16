@@ -30,10 +30,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
+
+import twitter4j.*;
 
 /**
  * Grabs a tweet from a randomly selected account
@@ -46,8 +46,6 @@ public class GrabServlet extends HttpServlet {
 
 	private Random rand = new Random();
 
-	private ObjectMapper mapper = new ObjectMapper();
-
 	private static final String ERROR_MESSAGE = "Something went wrong... sorry";
 	
 	/**
@@ -57,36 +55,31 @@ public class GrabServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		PrintWriter out = response.getWriter();
 
+		// Get random account
 		List<String> accounts = Context.getOptions().getAccounts();
 		String randAccount = accounts.get(rand.nextInt(accounts.size()));
 
-		/**
-		 * Twitter API v1
-		 * see https://dev.twitter.com/docs/api/1/get/statuses/user_timeline
-		 */
-		URL url = new URL("https://api.twitter.com/1/statuses/user_timeline.json?trim_user=true&count=50&include_rts=false&screen_name=" + randAccount);
-		List<Map<String, ?>> tweets;
-
 		try {
-			tweets = (List<Map<String, ?>>)mapper.readValue(url.openStream(), List.class);
+			Twitter twitter = Context.getTwitterFactory().getInstance();
+			ResponseList<Status> tweets =  twitter.getUserTimeline(randAccount);
+
+			if (tweets.size() == 0) {
+				log.warn("No tweets for " + randAccount);
+				out.write(ERROR_MESSAGE);
+				return;
+			}
+
+			// Pick random tweet
+			Status randomTweet = tweets.get(rand.nextInt(tweets.size()));
+			//long tweetId = randomTweet.getId();
+			String tweetText = randomTweet.getText();
+
+			out.write(tweetText);
 		}
-		catch (IOException ex) {
-			log.warn("Error reading from " + url, ex);
+		catch (TwitterException ex) {
+			log.error(ex);
 			out.write(ERROR_MESSAGE);
 			return;
 		}
-
-		if (tweets.size() == 0) {
-			log.warn("No tweets for " + randAccount);
-			out.write(ERROR_MESSAGE);
-			return;
-		}
-
-		// Pick random tweet
-		Map<String, ?> randomTweet = tweets.get(rand.nextInt(tweets.size()));
-		Long tweetId = (Long)randomTweet.get("id");
-		String tweetText = (String)randomTweet.get("text");
-
-		out.write(tweetText);
 	}
 }

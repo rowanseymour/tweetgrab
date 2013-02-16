@@ -20,6 +20,7 @@
 package com.ijuru.tweetgrab;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Application options
@@ -28,11 +29,21 @@ public class Options {
 
 	private List<String> accounts;
 
+	private Map<String, String> credentials;
+
 	public List<String> getAccounts() {
 		return accounts;
 	}
 
 	public void setAccounts(List<String> accounts) {
 		this.accounts = accounts;
+	}
+
+	public Map<String, String> getCredentials() {
+		return credentials;
+	}
+
+	public void setCredentials(Map<String, String> credentials) {
+		this.credentials = credentials;
 	}
 }
